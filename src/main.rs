@@ -1,12 +1,18 @@
-#[macro_use]
-extern crate rocket;
+use actix_web::{web, App, HttpRequest, HttpServer, Responder};
 
-#[get("/")]
-fn index() -> &'static str {
-    "Hello, world!"
+async fn greet(req: HttpRequest) -> impl Responder {
+    let name = req.match_info().get("name").unwrap_or("World");
+    format!("Hello {}!", &name)
 }
 
-#[launch]
-fn rocket() -> _ {
-    rocket::build().mount("/", routes![index])
+#[actix_web::main]
+async fn main() -> std::io::Result<()> {
+    HttpServer::new(|| {
+        App::new()
+            .route("/", web::get().to(greet))
+            .route("/{name}", web::get().to(greet))
+    })
+    .bind("127.0.0.1:9973")?
+    .run()
+    .await
 }
